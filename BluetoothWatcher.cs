@@ -68,8 +68,9 @@ namespace BlueLockScreen
             DeviceFound?.Invoke(this, EventArgs.Empty);
         }
 
+        // 修复类型名称：BluetoothLEAdvertisementWatcherStoppedEventArgs
         private void OnStopped(BluetoothLEAdvertisementWatcher sender,
-            BluetoothLEAdvertisementStoppedEventArgs args)
+            BluetoothLEAdvertisementWatcherStoppedEventArgs args)
         {
             _isRunning = false;
         }

@@ -1,4 +1,5 @@
 using System;
+using System.Globalization;
 using System.Threading.Tasks;
 using Windows.Devices.Bluetooth.Advertisement;
 
@@ -7,7 +8,7 @@ namespace BlueLockScreen
     public class BluetoothWatcher
     {
         private BluetoothLEAdvertisementWatcher _watcher;
-        private readonly string _targetAddress;
+        private readonly ulong _targetAddressLong;
         private DateTime _lastReceived = DateTime.MinValue;
         private int _lastRssi;
         private bool _isRunning;
@@ -21,27 +22,18 @@ namespace BlueLockScreen
 
         public BluetoothWatcher(string deviceAddress)
         {
-            _targetAddress = deviceAddress.ToLower().Replace(":", "").Replace("-", "");
+            string hex = deviceAddress.ToLower().Replace(":", "").Replace("-", "");
+            if (!ulong.TryParse(hex, NumberStyles.HexNumber, null, out ulong addr))
+                throw new ArgumentException("无效的蓝牙 MAC 地址");
+            _targetAddressLong = addr;
         }
 
         public void Start()
         {
             if (_isRunning) return;
 
-            if (!ulong.TryParse(_targetAddress, System.Globalization.NumberStyles.HexNumber,
-                    null, out ulong addr))
-                throw new ArgumentException("无效的蓝牙 MAC 地址");
-
-            // 修正：使用 BluetoothLEAdvertisementFilter.BluetoothAddress 属性
-            var filter = new BluetoothLEAdvertisementFilter
-            {
-                BluetoothAddress = addr
-            };
-
-            _watcher = new BluetoothLEAdvertisementWatcher
-            {
-                AdvertisementFilter = filter
-            };
+            // 不设置过滤器，在接收事件中通过地址筛选
+            _watcher = new BluetoothLEAdvertisementWatcher();
 
             _watcher.Received += OnReceived;
             _watcher.Stopped += OnStopped;
@@ -65,6 +57,10 @@ namespace BlueLockScreen
         private void OnReceived(BluetoothLEAdvertisementWatcher sender,
             BluetoothLEAdvertisementReceivedEventArgs args)
         {
+            // 仅处理匹配的目标蓝牙地址
+            if (args.BluetoothAddress != _targetAddressLong)
+                return;
+
             _lastReceived = DateTime.Now;
             _lastRssi = args.RawSignalStrengthInDBm;
             RssiUpdated?.Invoke(this, _lastRssi);

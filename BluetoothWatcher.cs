@@ -32,12 +32,15 @@ namespace BlueLockScreen
                     null, out ulong addr))
                 throw new ArgumentException("无效的蓝牙 MAC 地址");
 
+            // 修正：使用 BluetoothLEAdvertisementFilter.BluetoothAddress 属性
+            var filter = new BluetoothLEAdvertisementFilter
+            {
+                BluetoothAddress = addr
+            };
+
             _watcher = new BluetoothLEAdvertisementWatcher
             {
-                AdvertisementFilter = new BluetoothLEAdvertisementFilter
-                {
-                    Advertisement = { BluetoothAddress = addr }
-                }
+                AdvertisementFilter = filter
             };
 
             _watcher.Received += OnReceived;
@@ -68,7 +71,6 @@ namespace BlueLockScreen
             DeviceFound?.Invoke(this, EventArgs.Empty);
         }
 
-        // 修复类型名称：BluetoothLEAdvertisementWatcherStoppedEventArgs
         private void OnStopped(BluetoothLEAdvertisementWatcher sender,
             BluetoothLEAdvertisementWatcherStoppedEventArgs args)
         {

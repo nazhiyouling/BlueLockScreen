@@ -10,6 +10,10 @@ namespace BlueLockScreen
         {
             Application.EnableVisualStyles();
             Application.SetCompatibleTextRenderingDefault(false);
+
+            // 设置 PerMonitorV2 DPI 感知，实现界面缩放（非等比缩放）
+            Application.SetHighDpiMode(HighDpiMode.PerMonitorV2);
+
             SettingsManager.Load();
             Application.Run(new MainForm());
         }

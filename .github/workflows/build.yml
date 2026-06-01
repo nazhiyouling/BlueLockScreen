@@ -5,6 +5,8 @@ on:
     branches: [ "main" ]
   pull_request:
     branches: [ "main" ]
+  release:
+    types: [created]  # 当创建 Release 时触发
 
 jobs:
   build:
@@ -21,8 +23,17 @@ jobs:
     - name: Publish
       run: dotnet publish BlueLockScreen.csproj -c Release -r win-x64 --self-contained true -p:PublishSingleFile=true -o publish
 
-    - name: Upload artifact
+    - name: Upload to Release
+      uses: softprops/action-gh-release@v1
+      if: github.event_name == 'release'
+      with:
+        files: publish/BlueLockScreen.exe
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+    - name: Upload Artifact (for branch pushes)
       uses: actions/upload-artifact@v4
+      if: github.event_name != 'release'
       with:
         name: BlueLockScreen-win-x64
         path: publish/BlueLockScreen.exe
